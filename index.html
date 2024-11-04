@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Persistent Fullscreen Reverse Timer with Sound</title>
     <link rel="stylesheet" href="index.css">
-
 </head>
 
 <body>
@@ -18,6 +17,12 @@
         </div>
         <button onclick="startTimer()">Start</button>
         <button onclick="resetTimer()">Reset</button>
+        <div>
+            <input type="number" id="interval-hours" class="timer-input" placeholder="HH" min="0" max="99">
+            <input type="number" id="interval-minutes" class="timer-input" placeholder="MM" min="0" max="59">
+            <input type="number" id="interval-seconds" class="timer-input" placeholder="SS`" min="0" max="59">
+        </div>
+        <button onclick="setIntervalSound()">Set Interval Sound</button>
         <div id="countdown-display">00:00:00</div>
     </div>
 
@@ -25,122 +30,7 @@
         <div id="countdown-display-full">00:00:00</div>
         <button class="close-btn" onclick="closeFullscreen()">Exit</button>
     </div>
-
-    <script>
-        let countdown;
-        const display = document.getElementById('countdown-display');
-        const fullscreenTimer = document.getElementById('fullscreen-timer');
-        const displayFull = document.getElementById('countdown-display-full');
-        const timerContainer = document.getElementById('timer-container');
-
-        // Sound files
-        const endSound = new Audio('a.wav');  // Plays when time is up
-        const hourlySound = new Audio('b.wav'); // Plays every hour during countdown
-        let hoursElapsed = 0;
-        function playSoundForOneMinute(audio) {
-            audio.loop = true; // Enable looping
-            audio.play();
-            setTimeout(() => {
-                audio.loop = false; // Stop looping after 1 minute
-                audio.pause(); // Pause the audio
-                audio.currentTime = 0; // Reset playback to the start
-            }, 15000); // 1 minute = 60000 milliseconds
-        }
-
-        function startTimer() {
-            const hours = parseInt(document.getElementById('hours').value) || 0;
-            const minutes = parseInt(document.getElementById('minutes').value) || 0;
-            const seconds = parseInt(document.getElementById('seconds').value) || 0;
-
-            const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-            if (totalSeconds <= 0) {
-                display.innerText = "Please set a valid time.";
-                return;
-            }
-
-            // Calculate end time and save to localStorage
-            const endTime = Date.now() + totalSeconds * 1000;
-            localStorage.setItem('timerEndTime', endTime);
-
-            hoursElapsed = 0; // Reset hourly sound counter
-            openFullscreen();
-            runCountdown(endTime);
-        }
-
-        function runCountdown(endTime) {
-            clearInterval(countdown);
-            countdown = setInterval(() => {
-                const remainingTime = Math.max(0, endTime - Date.now());
-                const totalSeconds = Math.floor(remainingTime / 1000);
-
-                const hrs = Math.floor(totalSeconds / 3600);
-                const mins = Math.floor((totalSeconds % 3600) / 60);
-                const secs = totalSeconds % 60;
-
-                const formattedTime =
-                    `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
-                display.innerText = formattedTime;
-                displayFull.innerText = formattedTime;
-
-                // Play hourly sound for 1 minute if an hour has passed
-                if (hrs < hoursElapsed) {
-                    playSoundForOneMinute(hourlySound);
-                    hoursElapsed = hrs;
-                }
-
-                // Play end sound for 1 minute when time is up
-                if (totalSeconds <= 0) {
-                    clearInterval(countdown);
-                    localStorage.removeItem('timerEndTime');
-                    display.innerText = "Time's up!";
-                    displayFull.innerText = "Time's up!";
-                    playSoundForOneMinute(endSound); // Play sound when timer ends
-                    resetTimer();
-                }
-            }, 1000);
-        }
-
-        function resetTimer() {
-            clearInterval(countdown);
-            localStorage.removeItem('timerEndTime');
-            display.innerText = "00:00:00";
-            displayFull.innerText = "00:00:00";
-            document.getElementById('hours').value = "";
-            document.getElementById('minutes').value = "";
-            document.getElementById('seconds').value = "";
-            closeFullscreen();
-        }
-
-        function openFullscreen() {
-            fullscreenTimer.style.display = 'flex';
-            timerContainer.style.transform = 'scale(0)';
-        }
-
-        function closeFullscreen() {
-            fullscreenTimer.style.display = 'none';
-            timerContainer.style.transform = 'scale(1)';
-        }
-
-        // Resume timer if there's an active countdown on page load
-        window.onload = function () {
-            const savedEndTime = localStorage.getItem('timerEndTime');
-            if (savedEndTime) {
-                openFullscreen();
-                runCountdown(Number(savedEndTime));
-            }
-        };
-
-        // Listen for the Enter key on input fields
-        document.querySelectorAll('.timer-input').forEach(input => {
-            input.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    startTimer(); // Call startTimer on Enter key press
-                }
-            });
-        });
-
-    </script>
 </body>
+<script src="index.js"></script>
 
 </html>
